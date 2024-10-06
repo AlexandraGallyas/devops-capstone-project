@@ -124,7 +124,7 @@ class TestAccountService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
     def test_read_account(self):
-        """It should Read and Account"""
+        """It should Read an Account"""
         account = self._create_accounts(1)[0]
         response = self.client.get(f"{BASE_URL}/{account.id}", content_type="application./json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -136,3 +136,25 @@ class TestAccountService(TestCase):
         response = self.client.get(f"{BASE_URL}/0", content_type="application./json")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_update_account(self):
+        """It should Update an Account"""
+        # create an Account to update
+        account = AccountFactory()
+        response = self.client.post(BASE_URL, json=account.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Update the account
+        new_account = response.get_json()
+        new_account["name"] = "test"
+        response_update = self.client.post(f"{BASE_URL}/{new_account['id']}", json=new_account)
+        self.assertEqual(response_update.status_code, status.HTTP_200_OK)
+        updated_account = response_update.get_json()
+        self.assertEqual(updated_account["name"], "test")
+
+    def test_update_inexistent_account(self):
+        """It should not Update an Account that does not exist"""
+        response = self.client.get(f"{BASE_URL}/0", content_type="application./json")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        account = AccountFactory()
+        response = self.client.post(f"{BASE_URL}/0", json=account.serialize())
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
